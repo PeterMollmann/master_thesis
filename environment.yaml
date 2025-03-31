@@ -1,11 +1,36 @@
-name: master-thesis
+name: master_thesis
 channels:
+  - conda-forge
   - defaults
 dependencies:
   - python=3.8
+  - gmsh
+  - jax
+  - jaxopt
+  - numpy
+  - pygmo
+  - python
+  - python-gmsh
+  - petsc4py
+  - jupyterlab
+  - trame
+  - tqdm
+  - ipywidgets
+  - scipy
+  - scikit-learn
+  - pyvista
+  - typeguard
+  - yaml
+  - pygraphviz
   - pip
   - pip:
       - pre-commit
       - pytest
+      - pyoperon
       - black
       - flake8
+      - git+https://github.com/cpml-au/dctkit
+      - git+https://github.com/cpml-au/deap
+      - ray
+      - pygmsh
+      - tox
