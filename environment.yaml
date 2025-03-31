@@ -3,13 +3,12 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.8
   - gmsh
   - jax
   - jaxopt
   - numpy
   - pygmo
-  - python
+  - python 3.12
   - python-gmsh
   - petsc4py
   - jupyterlab
@@ -24,13 +23,14 @@ dependencies:
   - pygraphviz
   - pip
   - pip:
+      - git+https://github.com/cpml-au/dctkit
+      - git+https://github.com/cpml-au/deap
+      - git+https://github.com/PeterMollmann/AlpineGP
       - pre-commit
       - pytest
       - pyoperon
       - black
       - flake8
-      - git+https://github.com/cpml-au/dctkit
-      - git+https://github.com/cpml-au/deap
       - ray
       - pygmsh
       - tox
