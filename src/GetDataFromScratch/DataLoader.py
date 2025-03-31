@@ -15,17 +15,19 @@ def DataLoader(fileNameID, toLoad="both"):
 
     """
     if toLoad == "RFs":
-        rfs = np.loadtxt("ScratchData/reactionForces_"+fileNameID+".txt", delimiter=",",
+        rfs = np.loadtxt("src/GetDataFromScratch/ScratchData/reactionForces_"+fileNameID+".txt", delimiter=",",
                          skiprows=2, usecols=(1, 2, 3, 4))
         return rfs
     elif toLoad == "coords":
-        coords = np.loadtxt("ScratchData/coordinates_"+fileNameID+".txt",
+        # print("ScratchData/coordinates_"+fileNameID+".txt")
+        coords = np.loadtxt("src/GetDataFromScratch/ScratchData/coordinates_"+fileNameID+".txt",
                             delimiter=",", skiprows=1, usecols=(4, 5, 6))
+
         return coords
 
     else:
-        coords = np.loadtxt("ScratchData/coordinates_"+fileNameID+".txt",
+        coords = np.loadtxt("src/GetDataFromScratch/ScratchData/coordinates_"+fileNameID+".txt",
                             delimiter=",", skiprows=1, usecols=(4, 5, 6))
-        rfs = np.loadtxt("ScratchData/reactionForces_"+fileNameID+".txt", delimiter=",",
+        rfs = np.loadtxt("src/GetDataFromScratch/ScratchData/reactionForces_"+fileNameID+".txt", delimiter=",",
                          skiprows=2, usecols=(1, 2, 3, 4))
         return rfs, coords
