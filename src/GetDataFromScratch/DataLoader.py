@@ -22,9 +22,7 @@ def DataLoader(fileNameID, toLoad="both"):
         # print("ScratchData/coordinates_"+fileNameID+".txt")
         coords = np.loadtxt("src/GetDataFromScratch/ScratchData/coordinates_"+fileNameID+".txt",
                             delimiter=",", skiprows=1, usecols=(4, 5, 6))
-
         return coords
-
     else:
         coords = np.loadtxt("src/GetDataFromScratch/ScratchData/coordinates_"+fileNameID+".txt",
                             delimiter=",", skiprows=1, usecols=(4, 5, 6))
