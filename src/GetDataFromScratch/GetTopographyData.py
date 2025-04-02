@@ -66,8 +66,8 @@ def GetTopographyData(coords: np.ndarray, lowerBound: float = 1.5, upperBound: f
     for unique_value in x_undef_unique:
         x_direction_mask = (x_undef_masked == unique_value)
         temp = np.mean(y_def_masked[x_direction_mask])
-        print(y_def_masked[x_direction_mask])
-        print(temp)
+        # print(y_def_masked[x_direction_mask])
+        # print(temp)
         if temp < residualSratchDepth:
             residualSratchDepth = temp
         elif temp > pileUpHeight:
