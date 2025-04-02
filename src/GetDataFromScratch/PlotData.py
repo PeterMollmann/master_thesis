@@ -74,6 +74,12 @@ plt.legend(["n=0.1", "n=0.2", "n=0.3", "n=0.4", "n=0.5"])
 plt.xlabel("Yield strength [MPa]")
 plt.ylabel(r"$F_n/(E\sigma_y)^{0.5}h_r^2$ [-]")
 
+plt.figure(5)
+plt.plot(abs(rf2), rf3/abs(rf2))
+plt.legend(["n=0.1", "n=0.2", "n=0.3", "n=0.4", "n=0.5"])
+plt.xlabel(r"F_n [N]")
+plt.ylabel(r"$F_t/F_n$ [-]")
+plt.ylim([0, 0.4])
 
 # %%
 fileNameID = "SY"+str(250)+"_n0"+str(int(10*0.1)) + \
