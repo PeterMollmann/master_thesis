@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+src/GetDataFromScratch/ScratchData/MaterialSweep/
 
 # C extensions
 *.so
