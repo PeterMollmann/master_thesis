@@ -77,3 +77,39 @@ def GetTopographyData(coords: np.ndarray, lowerBound: float = 1.5, upperBound: f
     scratchWidth = 2*np.mean(x_def_masked[xUniqueOfMaxPileUp])
 
     return abs(residualSratchDepth-0.64), scratchWidth, pileUpHeight-0.64
+
+
+def GetScratchProfile(coords: np.ndarray, lowerBound: float = 1.5, upperBound: float = 2.0):
+    """ Gets the average scratch profile between the lower and upper bound normal to the x-y plane. 
+
+    This function takes undeformed and deformed coordinates of a scratch test 
+    and returns the average scratch profile coordinates in the x-y plane. 
+
+    Only works if the height of the substrate is 0.64mm, otherwise, change the function.
+
+    Args:
+        coords (array-like): Coordinates of both undeformed and deformed nodes.
+        lowerBound (float): Lower bound for extracting specific set of coordinates along z-direction (scratch direction).
+        upperBound (float): Upper bound for extracting specific set of coordinates along z-direction (scratch direction).
+
+    Returns:
+        list: average profile coordinate x, average profile coordinate y.
+
+    """
+    x_undef, y_undef, z_undef = coords[:, 0], coords[:, 1], coords[:, 2]
+    x_def, y_def, z_def = coords[:, 3], coords[:, 4], coords[:, 5]
+    z_direction_mask = (z_undef >= lowerBound) & (z_undef <= upperBound)
+
+    x_undef_masked = x_undef[z_direction_mask]
+    x_def_masked = x_def[z_direction_mask]
+    y_def_masked = y_def[z_direction_mask]
+
+    x_undef_unique = np.unique(x_undef_masked)
+    x_def_unique_mean = np.zeros(shape=len(x_undef_unique))
+    y_def_unique_mean = np.zeros(shape=len(x_undef_unique))
+    for i, unique_value in enumerate(x_undef_unique):
+        x_direction_mask = (x_undef_masked == unique_value)
+        x_def_unique_mean[i] = np.mean(x_def_masked[x_direction_mask])
+        y_def_unique_mean[i] = np.mean(y_def_masked[x_direction_mask])
+
+    return x_def_unique_mean, y_def_unique_mean-0.64
