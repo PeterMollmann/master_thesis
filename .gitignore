@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 src/GetDataFromScratch/ScratchData/MaterialSweep/
+src/GetDataFromScratch/ScratchData/MeshDependenceData/
+src/GetDataFromScratch/ScratchData/MassScaleTestingData/
+src/GetDataFromScratch/ScratchData/VelocityTestingData/
 
 # C extensions
 *.so
