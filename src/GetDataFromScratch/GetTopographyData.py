@@ -33,7 +33,7 @@ def LoadScratchTestData(fileNameID: str, path: str, toLoad: str = "both"):
         return rfs, coords
 
 
-def GetTopographyData(coords: np.ndarray, lowerBound: float = 1.5, upperBound: float = 2.0):
+def GetTopographyData(coords: np.ndarray, lowerBound: float = 2.00, upperBound: float = 2.44):
     """ Gets the residual scratch depth, the scratch width and the pile-up height.
 
     This function takes undeformed and deformed coordinates of a scratch test 
@@ -79,7 +79,7 @@ def GetTopographyData(coords: np.ndarray, lowerBound: float = 1.5, upperBound: f
     return abs(residualSratchDepth-0.64), scratchWidth, pileUpHeight-0.64
 
 
-def GetScratchProfile(coords: np.ndarray, lowerBound: float = 1.5, upperBound: float = 2.0):
+def GetScratchProfile(coords: np.ndarray, lowerBound: float = 2.00, upperBound: float = 2.44):
     """ Gets the average scratch profile between the lower and upper bound normal to the x-y plane. 
 
     This function takes undeformed and deformed coordinates of a scratch test 
