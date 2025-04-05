@@ -1,18 +1,3 @@
-# predict, score, and fitness function for gpsr object in alpineGP.
-# import by: from main.helpers import *
-# Use as follows:
-#
-# callback_func = assign_attributes
-# gpsr = GPSymbolicRegressor(pset=pset,
-#                           fitness=compute_attributes.remote,
-#                           error_metric=compute_MSEs.remote,
-#                           predict_func=predict.remote,
-#                           callback_func=callback_func
-#                           )
-#
-# the evaluation is the only thing that can be worth changing.
-# currently, the evaluation is MSE.
-
 import ray
 
 from alpine.gp import util
