@@ -1,0 +1,59 @@
+from alpine.gp import gpsymbreg as gps
+from alpine.data import Dataset
+from SRScratch.utils.gpsrHelpers import *
+from SRScratch.utils.loadYaml import loadYaml
+import numpy as np
+import os
+import yaml
+
+
+def SRScratch(config_file_data, features: np.ndarray, target: np.ndarray):
+    """
+    Args:
+        yamlPath (str): Path to .yaml config file for the problem
+        features (array-like): Array with features data. Different features as columns.
+        target (array-like): Array with target data.
+
+    Returns:
+
+    """
+    # load config settings
+
+    # config_file_data = loadYaml(path=yamlPath)
+
+    # Initialise primitive set
+    pset = gp.PrimitiveSetTyped("Main", [float], float)
+    pset.renameArguments(ARG0="x")
+    pset.addTerminal(object, float, "a")
+
+    batch_size = config_file_data["gp"]["batch_size"]
+    callback_func = assign_attributes
+
+    fitness_scale = config_file_data["gp"]["fitness_scale"]
+    penalty = config_file_data["gp"]["penalty"]
+    common_data = {"penalty": penalty, "fitness_scale": fitness_scale}
+
+    gpsr = gps.GPSymbolicRegressor(
+        pset=pset,
+        fitness=compute_attributes.remote,
+        predict_func=eval_expr.remote,
+        error_metric=compute_MSEs.remote,
+        common_data=common_data,
+        callback_func=callback_func,
+        print_log=True,
+        num_best_inds_str=3,
+        config_file_data=config_file_data,
+        save_best_individual=False,
+        output_path="./",
+        # seed=seed,
+        plot_best_individual_tree=1,
+        batch_size=batch_size,
+    )
+    train_data = Dataset("dataset", features, target)
+    gpsr.fit(train_data=train_data)
+
+    best_ind = gpsr.best
+
+    ray.shutdown()
+
+    return best_ind
