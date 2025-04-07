@@ -7,7 +7,7 @@ import os
 import yaml
 
 
-def SRScratch(config_file_data, features: np.ndarray, target: np.ndarray):
+def SRScratch(config_file_data, trainDataSet, testDataSet=None, seed=None):
     """
     Args:
         yamlPath (str): Path to .yaml config file for the problem
@@ -41,19 +41,19 @@ def SRScratch(config_file_data, features: np.ndarray, target: np.ndarray):
         common_data=common_data,
         callback_func=callback_func,
         print_log=True,
-        num_best_inds_str=3,
+        num_best_inds_str=1,
         config_file_data=config_file_data,
         save_best_individual=False,
         output_path="./",
-        # seed=seed,
-        plot_best_individual_tree=1,
+        seed=seed,
+        plot_best_individual_tree=0,
         batch_size=batch_size,
     )
-    train_data = Dataset("dataset", features, target)
-    gpsr.fit(train_data=train_data)
+    gpsr.fit(train_data=trainDataSet)
 
     best_ind = gpsr.best
-
+    # print(best_ind)
+    fit_score = gpsr.score(trainDataSet)
     ray.shutdown()
-
-    return best_ind
+    # print(fit_score)
+    return best_ind, fit_score
