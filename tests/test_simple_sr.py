@@ -9,7 +9,7 @@ import yaml
 def test_simple_sr():
 
     x = np.array([x/10. for x in range(-10, 10)])
-    y = x**3 + x**2 + x
+    y = x**4 + x**3 + x**2 + x
 
     yamlPath = "test_simple_sr.yaml"
     yamlfile = yamlPath
