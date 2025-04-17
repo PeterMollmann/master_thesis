@@ -1,4 +1,5 @@
 import numpy as np
+import glob
 
 
 def LoadScratchTestData(fileNameID: str, path: str, toLoad: str = "both"):
@@ -8,7 +9,7 @@ def LoadScratchTestData(fileNameID: str, path: str, toLoad: str = "both"):
 
     Args:
         fileNameID (str): The ID of the data file. Does not include "reactionForces" or "coordinates"
-        path (str): The path to the data files
+        path (str): The path to the data files. 
         toLoad (str): What data to load. "coords", "RFs", "both"
 
     Returns:
@@ -66,8 +67,6 @@ def GetTopographyData(coords: np.ndarray, lowerBound: float = 2.00, upperBound: 
     for unique_value in x_undef_unique:
         x_direction_mask = (x_undef_masked == unique_value)
         temp = np.mean(y_def_masked[x_direction_mask])
-        # print(y_def_masked[x_direction_mask])
-        # print(temp)
         if temp < residualSratchDepth:
             residualSratchDepth = temp
         elif temp > pileUpHeight:
@@ -77,6 +76,14 @@ def GetTopographyData(coords: np.ndarray, lowerBound: float = 2.00, upperBound: 
     scratchWidth = 2*np.mean(x_def_masked[xUniqueOfMaxPileUp])
 
     return abs(residualSratchDepth-0.64), scratchWidth, pileUpHeight-0.64
+
+
+def GetData(dataFolderPath):
+
+    for name in glob.glob(dataFolderPath+"coordinates_*"):
+        coords = LoadScratchTestData(name, )
+
+    pass
 
 
 def GetScratchProfile(coords: np.ndarray, lowerBound: float = 2.00, upperBound: float = 2.44):
