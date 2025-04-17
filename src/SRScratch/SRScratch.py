@@ -1,7 +1,7 @@
 from alpine.gp import gpsymbreg as gps
 from alpine.data import Dataset
-from SRScratch.utils.gpsrHelpers import *
-from SRScratch.utils.loadYaml import loadYaml
+from SRScratch.SRScratchUtils.gpsrHelpers import *
+from SRScratch.SRScratchUtils.loadYaml import loadYaml
 import numpy as np
 import os
 import yaml
