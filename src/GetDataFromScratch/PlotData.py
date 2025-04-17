@@ -7,13 +7,18 @@ from matplotlib import cm
 import pandas as pd
 import seaborn as sns
 np.set_printoptions(legacy='1.25')
-# %%Extract features
+# %%Extract basic features
 
 yield_strengths = np.arange(50, 2050, 50)
 strain_hardening_indexs = np.arange(0.1, 0.6, 0.1)
 youngs_modulus = 200000
 
-color = ["b", "r", "g", "y", "k"]
+scratch_depth = 50e-3
+indenter_angle = 120
+indenter_radius_at_scratch_depth = scratch_depth / \
+    np.tan((90 - indenter_angle/2)*np.pi/180)
+
+# color = ["b", "r", "g", "y", "k"]
 
 h_rs = np.zeros((len(yield_strengths), len(strain_hardening_indexs)))
 ws = np.zeros((len(yield_strengths), len(strain_hardening_indexs)))
@@ -29,7 +34,7 @@ for i, sy in enumerate(yield_strengths):
         # print(yield_strengths)
         fileNameID = "SY"+str(sy)+"_n0"+str(int(10*n)) + \
             "_d0050_E200000_mu00_rho78_Poisson03"
-        path = "ScratchData/Data1/"
+        path = "ScratchData/MaterialSweep/"
         rfs, coords = LoadScratchTestData(
             fileNameID=fileNameID, path=path, toLoad="both")
         # x, y, z = coords[:, 0], coords[:, 1], coords[:, 2]
@@ -43,37 +48,63 @@ for i, sy in enumerate(yield_strengths):
         ns[i, j] = round(n, 1)
 
 H_s = abs(rf2)/(1/4*(ws)**2)
-H_sNorm = H_s/yield_strengths.reshape(-1, 1)
-fnNorm = abs(rf2)/((youngs_modulus*yield_strengths.reshape(-1, 1))**0.5*h_rs**2)
-wNorm = ws / (abs(rf2)/yield_strengths.reshape(-1, 1))**0.5
-fnNormOld = abs(rf2)/(youngs_modulus*h_rs**2)
-wNormOld = ws / (abs(rf2)/youngs_modulus)**0.5
-syNorm = sy_s/youngs_modulus
-ftNorm = rf3/abs(rf2)
-hpNorm = h_ps/h_rs
-
 all_raw_data = {"Yield Strength": sy_s.reshape(-1, ),
                 "Strain Hardening": ns.reshape(-1, ),
                 "Residual Depth": h_rs.reshape(-1, ),
                 "Width": ws.reshape(-1, ),
                 "Pile-up Height": h_ps.reshape(-1, ),
                 "Normal Force": abs(rf2).reshape(-1, ),
-                "Tangential Force": rf3.reshape(-1, ),
-                "Hardness": H_s.reshape(-1,)}
-
-all_norm_data = {r"$\sigma_y/E$": syNorm.reshape(-1,),
-                 r"$n$": ns.reshape(-1,),
-                 r"$h_p/h_r$": hpNorm.reshape(-1,),
-                 r"$w/(F_n/\sigma_y)^{0.5}$": wNorm.reshape(-1,),
-                 r"$w/(F_n/E)^{0.5}$": wNormOld.reshape(-1,),
-                 r"$F_n/(E\sigma_y)^{0.5}h_r^2$": fnNorm.reshape(-1,),
-                 r"$F_n/(Eh_r^2)$": fnNormOld.reshape(-1,),
-                 r"$F_t/F_n$": ftNorm.reshape(-1,),
-                 r"$H_s/\sigma_y$": H_sNorm.reshape(-1,)}
-
-
+                "Tangential Force": rf3.reshape(-1, ), }
 all_raw_data_pandas = pd.DataFrame(all_raw_data)
-all_norm_data_pandas = pd.DataFrame(all_norm_data)
+
+all_raw_data_pandas.to_csv(
+    "ScratchData/MaterialSweep/AllRawData.csv", index=False)
+
+# %% Dimensional analysis data
+# Normal force normalisation
+# projected_area_normal = 1/2*(2*r * r)
+projected_area_normal = 1/2*(ws * ws/2)
+# projected_area_normal = (ws * ws)
+fnNorm = abs(rf2)/(youngs_modulus*projected_area_normal)
+
+# Tangential force normalisation
+projected_area_tangential = scratch_depth * np.sqrt(scratch_depth*ws)
+# projected_area_tangential = 1/2*scratch_depth*(2*r)
+# projected_area_tangential = 1/2*scratch_depth*(ws)
+# projected_area_tangential = 1/2*h_rs*(ws)
+# projected_area_tangential = 1/2*h_rs*(2*r)
+ftNorm = rf3/(youngs_modulus*projected_area_tangential)
+
+# Scratch width normalisation
+# wNorm = ws/(r)
+# wNorm = ws/(h_rs)
+wNorm = ws/(scratch_depth)
+
+# Yield stress normalisation
+syNorm = sy_s/youngs_modulus
+
+# Pile-up height normalisation
+hpNorm = h_ps/scratch_depth
+# hpNorm = h_ps/h_rs
+
+# Residual depth normalisation
+hrNorm = h_rs/scratch_depth
+
+norm_data = {"syNorm": syNorm.reshape(-1,),
+             "n": ns.reshape(-1,),
+             "hrNorm": hrNorm.reshape(-1,),
+             "wNorm": wNorm.reshape(-1,),
+             "hpNorm": hpNorm.reshape(-1,),
+             "fnNorm": fnNorm.reshape(-1,),
+             "ftNorm": ftNorm.reshape(-1,), }
+
+norm_data_pandas = pd.DataFrame(norm_data)
+# norm_data_pandas.to_csv(
+#     "ScratchData/MaterialSweep/NormData.csv", index=False)
+# %% Plotting w/2 vs (h_p+h_d)/(tan(90-theta))
+plt.figure()
+plt.plot(h_ps, ws/2)
+
 # %% Plotting sy/E vs w/(F_n/E)^0.5
 plt.figure(1)
 plt.plot(yield_strengths/youngs_modulus, ws / np.sqrt(abs(rf2)/youngs_modulus))
@@ -233,8 +264,8 @@ for i in [0.1, 0.2, 0.3, 0.4, 0.5]:
         fileNameID=fileNameID, path=path, toLoad="both")
     x_plot, y_plot = GetScratchProfile(
         coords=coords, lowerBound=2.00, upperBound=2.44)
-    h_r, _, _ = GetTopographyData(coords, 2.0, 2.44)
-    print(h_r)
+    h_r, w, h_p = GetTopographyData(coords, 2.0, 2.44)
+    # print(h_r)
     plt.plot(x_plot/h_r, (y_plot)/h_r, "o-", label="n="+str(i))
 
 plt.xlim([0, 6])
@@ -368,8 +399,8 @@ print(maxRF2)
 print(maxRF3)
 # %% plot sns.pairplot
 sns.set_theme()
-sns.pairplot(all_raw_data_pandas, hue="Strain Hardening")
-sns.pairplot(all_norm_data_pandas, hue="$n$")
+# sns.pairplot(all_raw_data_pandas, hue="Strain Hardening")
+sns.pairplot(Fn_norm_data_pandas, hue="n")
 
 # %%
 sns.relplot(all_raw_data, x="sy", y="h_r", hue="n")
