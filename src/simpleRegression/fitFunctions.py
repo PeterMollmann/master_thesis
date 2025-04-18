@@ -1,91 +1,79 @@
 import numpy as np
+from itertools import combinations
+from sklearn.metrics import r2_score, mean_squared_error
+from scipy.optimize import curve_fit
 
 
-def linearFit(xy, a, b, c):
-    """ A linear fitting function for 3D data with the form z = a + b*x + c*y.
-    Takes the x and y data in an array xy, and the parameters a, b, c.
-
+def fittingFunction(X, *coefficients, degree=2, include_interactions=True):
+    """A fitting function for 3D data with the form z = a + b*x1 + c*x2 + d*x1^2 + e*x2^2 + f*x1*x2.
+    Takes the feature data in an array X, and the parameters a, b, c, d, e, f.
     Args:
-        xy (array-like): A tuple containing the x and y data.
-        a (float): The intercept.
-        b (float): The coefficient for x.
-        c (float): The coefficient for y.
+        X (array-like): A tuple containing the feature data, ex. x1 and x2.
+        coefficients (tuple): A tuple containing the coefficients ex. a, b, c, d, e, f.
+        degree (int): The degree of the polynomial fit.
+        include_interactions (bool): Whether to include interaction terms, e.g. x1*x2.
     Returns:
         array-like: The fitted values.
     """
-    x, y = xy
-    return a + b*x + c*y
+    n_features = X.shape[0]
+
+    y = coefficients[0]
+
+    if degree >= 1:
+        y += np.dot(coefficients[1 : n_features + 1], X)
+
+    if degree >= 2:
+        y += np.dot(coefficients[n_features + 1 : 2 * n_features + 1], X**2)
+
+    if degree >= 2 and include_interactions:
+        n_interactions = int(n_features * (n_features - 1) / 2)
+        interaction_coefficients = coefficients[
+            2 * n_features + 1 : 2 * n_features + 1 + n_interactions
+        ]
+        for dk, (i, j) in zip(
+            interaction_coefficients, combinations(range(n_features), 2)
+        ):
+            y += dk * X[i] * X[j]
+
+    return y.flatten()
 
 
-def secondOrderFit(xy, a, b, c, d, e):
-    """ A second order fitting function for 3D data with the form z = a + b*x + c*y + d*x^2 + e*y^2.
-    Takes the x and y data in an array xy, and the parameters a, b, c, d, e.
+def SimpleRegression(features, target, degree=1, use_interactions: bool = True):
+    """
+    Perform polynomial regression on the provided data using the specified regression degree.
 
     Args:
-        xy (array-like): A tuple containing the x and y data.
-        a (float): The intercept.
-        b (float): The coefficient for x.
-        c (float): The coefficient for y.
-        d (float): The coefficient for x^2.
-        e (float): The coefficient for y^2.
+        features (array-like): A tuple containing the feature data (x1, x2).
+        target (array-like): The target variable data (y).
+        degree (str): The regression method to use. Options are 1, 2, or 3.
+        use_interactions (bool): Whether to include interaction terms, e.g. x1*x2.
     Returns:
-        array-like: The fitted values.
+        tuple: A tuple containing the optimal parameters, the R^2 score, and the mean square error.
     """
-    x, y = xy
-    return a + b*x + c*y + d*x**2 + e*y**2
+    x = features
+    y = target
 
+    n_features = features.shape[0]
+    n_interactions = int(n_features * (n_features - 1) / 2) if use_interactions else 0
 
-def secondOrderFit2(xy, a, b, c, d):
-    """ A second order fitting function for 3D data with the form z = a + b*x + c*y + d*x*y.
-    Takes the x and y data in an array xy, and the parameters a, b, c, d.
+    n_params = 0
 
-    Args:
-        xy (array-like): A tuple containing the x and y data.
-        a (float): The intercept.
-        b (float): The coefficient for x.
-        c (float): The coefficient for y.
-        d (float): The coefficient for xy.
-    Returns:
-        array-like: The fitted values.
-    """
-    x, y = xy
-    return a + b*x + c*y + d*x*y
+    if degree >= 1:
+        n_params = 1 + n_features
+    if degree >= 2:
+        n_params += n_features
+    if degree >= 2 and use_interactions:
+        n_params += n_interactions
 
+    p0 = (1,) * n_params
 
-def secondOrderFit3(xy, a, b, c, d, e, f):
-    """ A second order fitting function for 3D data with the form z = a + b*x + c*y + d*x^2 + e*y^2 + d*x*y.
-    Takes the x and y data in an array xy, and the parameters a, b, c, d, e, f.
+    def model(x, *coefficients):
+        return fittingFunction(
+            x, *coefficients, degree=degree, include_interactions=use_interactions
+        )
 
-    Args:
-        xy (array-like): A tuple containing the x and y data.
-        a (float): The intercept.
-        b (float): The coefficient for x.
-        c (float): The coefficient for y.
-        d (float): The coefficient for x^2.
-        e (float): The coefficient for y^2.
-        f (float): The coefficient for xy.
-    Returns:
-        array-like: The fitted values.
-    """
-    x, y = xy
-    return a + b*x + c*y + d*x**2 + e*y**2 + f*x*y
-
-
-def thirdOrderFit(xy, a, b, c, d, e, f, g):
-    """ A third order fitting function for 3D data with the form z = a + b*x + c*y + d*x^2 + e*y^2 + f*x*y + g*x^3.
-    Takes the x and y data in an array xy, and the parameters a, b, c, d, e, f, g.
-
-    Args:
-        xy (array-like): A tuple containing the x and y data.
-        a (float): The intercept.
-        b (float): The coefficient for x.
-        c (float): The coefficient for y.
-        d (float): The coefficient for x^2.
-        e (float): The coefficient for y^2.
-        f (float): The coefficient for xy.
-        g (float): The coefficient for x^3.
-    Returns:
-        array-like: The fitted values.
-    """
-    x, y = xy
-    return a + b*x + c*y + d*x**2 + e*y**2 + f*x*y + g*x**3
+    popt, _ = curve_fit(model, x, y, p0=p0)
+    y_pred = model(x, *popt)
+    r2 = r2_score(y_true=y, y_pred=y_pred)
+    mse = mean_squared_error(y_true=y, y_pred=y_pred)
+    return popt, r2, mse
