@@ -3,42 +3,60 @@ import glob
 
 
 def LoadScratchTestData(fileNameID: str, path: str, toLoad: str = "both"):
-    """ Loads the coodinates and reaction forces from a scratch test.
+    """Loads the coodinates and reaction forces from a scratch test.
 
     This function takes the file name and what data to load and returns the data.
 
     Args:
         fileNameID (str): The ID of the data file. Does not include "reactionForces" or "coordinates"
-        path (str): The path to the data files. 
+        path (str): The path to the data files.
         toLoad (str): What data to load. "coords", "RFs", "both"
 
     Returns:
-        np.ndarray: The data of either the coordinates, reaction forces or both 
+        np.ndarray: The data of either the coordinates, reaction forces or both
 
     """
     if toLoad == "RFs":
-        rfs = np.loadtxt(path + "reactionForces_"+fileNameID+".txt", delimiter=",",
-                         skiprows=2, usecols=(1, 2, 3, 4))
+        rfs = np.loadtxt(
+            path + "reactionForces_" + fileNameID + ".txt",
+            delimiter=",",
+            skiprows=2,
+            usecols=(1, 2, 3, 4),
+        )
         return rfs
 
     elif toLoad == "coords":
-        coords = np.loadtxt(path + "coordinates_"+fileNameID+".txt",
-                            delimiter=",", skiprows=1, usecols=(1, 2, 3, 4, 5, 6))
+        coords = np.loadtxt(
+            path + "coordinates_" + fileNameID + ".txt",
+            delimiter=",",
+            skiprows=1,
+            usecols=(1, 2, 3, 4, 5, 6),
+        )
         return coords
 
     else:
-        coords = np.loadtxt(path + "coordinates_"+fileNameID+".txt",
-                            delimiter=",", skiprows=1, usecols=(1, 2, 3, 4, 5, 6))
-        rfs = np.loadtxt(path + "reactionForces_"+fileNameID+".txt", delimiter=",",
-                         skiprows=2, usecols=(1, 2, 3, 4))
+        coords = np.loadtxt(
+            path + "coordinates_" + fileNameID + ".txt",
+            delimiter=",",
+            skiprows=1,
+            usecols=(1, 2, 3, 4, 5, 6),
+        )
+        rfs = np.loadtxt(
+            path + "reactionForces_" + fileNameID + ".txt",
+            delimiter=",",
+            skiprows=2,
+            usecols=(1, 2, 3, 4),
+        )
         return rfs, coords
 
 
-def GetTopographyData(coords: np.ndarray, lowerBound: float = 2.00, upperBound: float = 2.44):
-    """ Gets the residual scratch depth, the scratch width and the pile-up height.
+def GetTopographyData(
+    coords: np.ndarray, lowerBound: float = 2.00, upperBound: float = 2.44
+):
+    """Gets the residual scratch depth, the scratch width and the pile-up height.
 
-    This function takes undeformed and deformed coordinates of a scratch test 
-    and returns residual depth, scratch width and pile-up height. 
+    This function takes undeformed and deformed coordinates of a scratch test
+    and returns residual depth, scratch width and pile-up height.
 
     Only works if the height of the substrate is 0.64mm, otherwise, change the function.
 
@@ -65,7 +83,7 @@ def GetTopographyData(coords: np.ndarray, lowerBound: float = 2.00, upperBound: 
     residualSratchDepth = 1.0
     pileUpHeight = 0.0
     for unique_value in x_undef_unique:
-        x_direction_mask = (x_undef_masked == unique_value)
+        x_direction_mask = x_undef_masked == unique_value
         temp = np.mean(y_def_masked[x_direction_mask])
         if temp < residualSratchDepth:
             residualSratchDepth = temp
@@ -73,24 +91,28 @@ def GetTopographyData(coords: np.ndarray, lowerBound: float = 2.00, upperBound: 
             pileUpHeight = temp
             xUniqueOfMaxPileUp = x_direction_mask
 
-    scratchWidth = 2*np.mean(x_def_masked[xUniqueOfMaxPileUp])
+    scratchWidth = 2 * np.mean(x_def_masked[xUniqueOfMaxPileUp])
 
-    return abs(residualSratchDepth-0.64), scratchWidth, pileUpHeight-0.64
+    return abs(residualSratchDepth - 0.64), scratchWidth, pileUpHeight - 0.64
 
 
 def GetData(dataFolderPath):
 
-    for name in glob.glob(dataFolderPath+"coordinates_*"):
-        coords = LoadScratchTestData(name, )
+    for name in glob.glob(dataFolderPath + "coordinates_*"):
+        coords = LoadScratchTestData(
+            name,
+        )
 
     pass
 
 
-def GetScratchProfile(coords: np.ndarray, lowerBound: float = 2.00, upperBound: float = 2.44):
-    """ Gets the average scratch profile between the lower and upper bound normal to the x-y plane. 
+def GetScratchProfile(
+    coords: np.ndarray, lowerBound: float = 2.00, upperBound: float = 2.44
+):
+    """Gets the average scratch profile between the lower and upper bound normal to the x-y plane.
 
-    This function takes undeformed and deformed coordinates of a scratch test 
-    and returns the average scratch profile coordinates in the x-y plane. 
+    This function takes undeformed and deformed coordinates of a scratch test
+    and returns the average scratch profile coordinates in the x-y plane.
 
     Only works if the height of the substrate is 0.64mm, otherwise, change the function.
 
@@ -115,8 +137,8 @@ def GetScratchProfile(coords: np.ndarray, lowerBound: float = 2.00, upperBound: 
     x_def_unique_mean = np.zeros(shape=len(x_undef_unique))
     y_def_unique_mean = np.zeros(shape=len(x_undef_unique))
     for i, unique_value in enumerate(x_undef_unique):
-        x_direction_mask = (x_undef_masked == unique_value)
+        x_direction_mask = x_undef_masked == unique_value
         x_def_unique_mean[i] = np.mean(x_def_masked[x_direction_mask])
         y_def_unique_mean[i] = np.mean(y_def_masked[x_direction_mask])
 
-    return x_def_unique_mean, y_def_unique_mean-0.64
+    return x_def_unique_mean, y_def_unique_mean - 0.64
