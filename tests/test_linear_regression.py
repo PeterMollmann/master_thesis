@@ -1,6 +1,5 @@
 import numpy as np
 from simpleRegression.fitFunctions import SimpleRegression
-from scipy.optimize import curve_fit
 
 
 def test_linear_regression():
