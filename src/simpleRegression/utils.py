@@ -1,3 +1,8 @@
+import matplotlib.pyplot as plt
+import numpy as np
+from simpleRegression.fitFunctions import fittingFunction
+
+
 def printMethodInfo(method_name, best_params, r2_score, mse):
     print("=" * 50)
     print(f"Method: {method_name}")
@@ -17,10 +22,6 @@ def plot_data(features, target, method_name, best_params, include_interactions=T
         best_params (array-like): The optimal parameters from the regression.
         method_name (str): The name of the regression method used.
     """
-    import matplotlib.pyplot as plt
-    import numpy as np
-    from simpleRegression.fitFunctions import fittingFunction
-
     if len(features) == 2:
         x1, x2 = features
         y = target
