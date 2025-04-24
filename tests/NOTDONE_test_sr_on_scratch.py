@@ -8,7 +8,6 @@ import yaml
 
 
 def test_sr_on_scratch():
-
     # LoadScratchTestData()
 
     yamlPath = "test_simple_sr.yaml"
@@ -20,8 +19,9 @@ def test_sr_on_scratch():
     train_data = Dataset("dataset", x, y)
     train_data.X = [train_data.X]
 
-    best_ind, fit_score = SRScratch(config_file_data=config_file_data,
-                                    trainDataSet=train_data)
+    best_ind, fit_score = SRScratch(
+        config_file_data=config_file_data, trainDataSet=train_data
+    )
     assert fit_score <= 1e-12
 
 
