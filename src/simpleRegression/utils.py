@@ -54,6 +54,7 @@ def plot_data(
     ylabel: str = "Feature 2",
     zlabel: str = "Target Variable",
     target_name: str = "Target",
+    random_seed: int = 42,
     save_fig: bool = False,
 ):
     """
@@ -105,7 +106,7 @@ def plot_data(
 
     # Scatter plotting train and test data
     X_train, X_test, y_train, y_test = train_test_split(
-        features_all.T, target_all, test_size=0.2, random_state=42
+        features_all.T, target_all, test_size=0.2, random_state=random_seed
     )
     x1, x2 = X_train[:, 0], X_train[:, 1]
     x1_test, x2_test = X_test[:, 0], X_test[:, 1]
@@ -119,7 +120,7 @@ def plot_data(
         linewidths=1,
         alpha=1,
         # edgecolors="k",
-        label="FEM Data Points",
+        label="Train Data",
     )
     ax.scatter(
         x1_test,
@@ -129,7 +130,7 @@ def plot_data(
         linewidths=1,
         alpha=1,
         # edgecolors="k",
-        label="FEM Data Points for Test",
+        label="Test Data",
     )
 
     # Surface plotting
@@ -172,6 +173,7 @@ def plot_data(
         fancybox=True,
         shadow=True,
     )
+    # ax.view_init(elev=20, azim=30)
     # plt.grid()
 
     if save_fig:
