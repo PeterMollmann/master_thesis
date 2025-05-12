@@ -57,9 +57,6 @@ def GetTopographyData(
 
     This function takes undeformed and deformed coordinates of a scratch test
     and returns residual depth, scratch width and pile-up height.
-
-    Only works if the height of the substrate is 0.64mm, otherwise, change the function.
-
     Args:
         coords (array-like): Coordinates of both undeformed and deformed nodes.
         lowerBound (float): Lower bound for extracting specific set of coordinates along z-direction (scratch direction).
@@ -93,17 +90,11 @@ def GetTopographyData(
 
     scratchWidth = 2 * np.mean(x_def_masked[xUniqueOfMaxPileUp])
 
-    return abs(residualSratchDepth - 0.64), scratchWidth, pileUpHeight - 0.64
-
-
-def GetData(dataFolderPath):
-
-    for name in glob.glob(dataFolderPath + "coordinates_*"):
-        coords = LoadScratchTestData(
-            name,
-        )
-
-    pass
+    return (
+        abs(residualSratchDepth - y_undef.max()),
+        scratchWidth,
+        pileUpHeight - y_undef.max(),
+    )
 
 
 def GetScratchProfile(
@@ -113,8 +104,6 @@ def GetScratchProfile(
 
     This function takes undeformed and deformed coordinates of a scratch test
     and returns the average scratch profile coordinates in the x-y plane.
-
-    Only works if the height of the substrate is 0.64mm, otherwise, change the function.
 
     Args:
         coords (array-like): Coordinates of both undeformed and deformed nodes.
@@ -141,4 +130,4 @@ def GetScratchProfile(
         x_def_unique_mean[i] = np.mean(x_def_masked[x_direction_mask])
         y_def_unique_mean[i] = np.mean(y_def_masked[x_direction_mask])
 
-    return x_def_unique_mean, y_def_unique_mean - 0.64
+    return x_def_unique_mean, y_def_unique_mean - y_undef.max()
