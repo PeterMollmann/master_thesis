@@ -23,10 +23,11 @@ def TopographyPlot(z, x, y, title, modelSize="Full"):
 
         # Plotting
     surf = ax.plot_trisurf(z, x, y, cmap=cm.coolwarm, edgecolor="none")
-    fig.colorbar(surf, shrink=0.5, aspect=5)
+    # fig.colorbar(surf, shrink=0.5, aspect=5)
     # contour = ax.contour(z, x, y, zdir='z', offset=ax.get_zlim()[
     #                      0], cmap=cm.coolwarm)
     # ax.clabel(contour, fontsize=8, colors='k')
     ax.set_zlim([0.55, 0.65])
     ax.set_title(title)
     ax.set_xlim([0, 2.88])
+    ax.view_init(azim=45, elev=30)
