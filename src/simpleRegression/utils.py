@@ -12,8 +12,8 @@ def printMethodInfo(
     use_interactions: bool,
     train_r2_score: float,
     train_mse: float,
-    test_r2_score: float,
-    test_mse: float,
+    test_r2_score: float = None,
+    test_mse: float = None,
 ):
     """
     Print the regression method information, including the fitted function and parameters.
@@ -37,8 +37,8 @@ def printMethodInfo(
     print(f"Best Parameters: {best_params}")
     print(f"Train R^2 Score: {train_r2_score}")
     print(f"Train Mean Squared Error: {train_mse}")
-    print(f"Test R^2 Score: {test_r2_score}")
-    print(f"Test Mean Squared Error: {test_mse}")
+    print(f"Test R^2 Score: {test_r2_score}") if test_r2_score is not None else "N/A"
+    print(f"Test Mean Squared Error: {test_mse}") if test_mse is not None else "N/A"
     print("=" * 50)
 
 
