@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import pandas as pd
 import seaborn as sns
+from scipy.interpolate import griddata
+
 
 np.set_printoptions(legacy="1.25")
 # %%Extract basic features
@@ -31,6 +33,8 @@ ws = np.zeros((len(yield_strengths), len(strain_hardening_indexs)))
 h_ps = np.zeros((len(yield_strengths), len(strain_hardening_indexs)))
 rf2 = np.zeros((len(yield_strengths), len(strain_hardening_indexs)))
 rf3 = np.zeros((len(yield_strengths), len(strain_hardening_indexs)))
+rf2_test = np.zeros((len(yield_strengths), len(strain_hardening_indexs)))
+rf3_test = np.zeros((len(yield_strengths), len(strain_hardening_indexs)))
 sy_s = np.zeros((len(yield_strengths), len(strain_hardening_indexs)))
 ns = np.zeros((len(yield_strengths), len(strain_hardening_indexs)))
 
@@ -54,7 +58,9 @@ for i, sy in enumerate(yield_strengths):
         h_rs[i, j] = h_r
         ws[i, j] = w
         h_ps[i, j] = h_p
-        rf2[i, j] = rfs[-4, 2]
+        rf2_test[i, j] = np.mean(rfs[-2 - 2 : -2, 2])
+        rf3_test[i, j] = np.mean(rfs[-2 - 2 : -2, 3])
+        rf2[i, j] = abs(rfs[-4, 2])
         rf3[i, j] = rfs[-4, 3]
         sy_s[i, j] = sy
         ns[i, j] = round(n, 1)
@@ -85,7 +91,8 @@ all_raw_data = {
 }
 all_raw_data_pandas = pd.DataFrame(all_raw_data)
 
-all_raw_data_pandas.to_csv("ScratchData/MaterialSweep/AllRawData.csv", index=False)
+# all_raw_data_pandas.to_csv("ScratchData/MaterialSweep/AllRawData.csv", index=False)
+
 
 # %% Dimensional analysis data
 # Normal force normalisation
@@ -144,23 +151,89 @@ norm_data = {
 norm_data_pandas = pd.DataFrame(norm_data)
 # norm_data_pandas.to_csv(
 #     "ScratchData/MaterialSweep/NormData.csv", index=False)
-# %% Plotting w/2 vs (h_p+h_d)/(tan(90-theta))
+
+
+# %% Zhang validation data
+zhang_data = {
+    "syNorm": syNorm.reshape(
+        -1,
+    ),
+    "n": ns.reshape(
+        -1,
+    ),
+    "Fn/(sqrt(E*sy)h_r^2)": (
+        abs(rf2) / ((youngs_modulus * sy_s) ** 0.5 * h_rs**2)
+    ).reshape(
+        -1,
+    ),
+    "w/(sqrt(Fn/sy))": (ws / (np.sqrt(abs(rf2) / sy_s))).reshape(
+        -1,
+    ),
+}
+zhang_data_pandas = pd.DataFrame(zhang_data)
+# zhang_data_pandas.to_csv("ScratchData/MaterialSweep/ZhangData.csv", index=False)
+
+# %% New improved dimensionless groups
+
+FtFn = abs(rf3) / abs(rf2)
+hphr = h_ps / h_rs
+HsE = H_s / youngs_modulus
+
+norm_data = {
+    "syNorm": syNorm.reshape(
+        -1,
+    ),
+    "n": ns.reshape(
+        -1,
+    ),
+    "Ft/Fn": FtFn.reshape(
+        -1,
+    ),
+    "h_p/h_r": hphr.reshape(
+        -1,
+    ),
+    "H_s/E": HsE.reshape(
+        -1,
+    ),
+}
+
+
+norm_data_pandas = pd.DataFrame(norm_data)
+# norm_data_pandas.to_csv("ScratchData/MaterialSweep/NewNormData.csv", index=False)
+
+# %% plot F_t/F_n vs sy
 plt.figure()
-plt.plot(h_ps, ws / 2)
+
+# plt.plot(yield_strengths, abs(rf2), c="b")
+# plt.plot(yield_strengths, rf3, c="k")
+
+plt.plot(yield_strengths, rf3 / abs(rf2), c="r")
+# plt.legend(yield_strengths[1:-1:5])
+plt.xlabel(r"$\sigma_y$ [MPa]")
+# plt.ylabel(r"$F_t/F_n$ [-]")
+plt.ylim([0, 0.4])
+
+
+# %% Plotting H_s/E vs sy in log-log scale.
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
+plt.plot(sy_s, norm_data["H_s/E"].reshape(40, 5))
+ax.set_yscale("log")
+ax.set_xscale("log")
 
 # %% Plotting sy/E vs w/(F_n/E)^0.5
-plt.figure(1)
-plt.plot(yield_strengths / youngs_modulus, ws / np.sqrt(abs(rf2) / youngs_modulus))
-plt.vlines([600 / 200000, 600 / 200000], 0, 60, "k", "--")
-plt.legend(["n=0.1", "n=0.2", "n=0.3", "n=0.4", "n=0.5", r"$\sigma_y=600$ [MPa]"])
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
+plt.plot(yield_strengths / youngs_modulus, norm_data["h_p/h_r"].reshape(40, 5), "x-")
+# plt.vlines([600 / 200000, 600 / 200000], 0, 60, "k", "--")
+plt.legend(["n=0.1", "n=0.2", "n=0.3", "n=0.4", "n=0.5"])
 plt.xlabel("Yield strength / Youngs modulus [-]")
-plt.ylabel(r"$w/(F_n/E)^{0.5}$ [-]")
-plt.xlim([0, 0.01])
-plt.ylim([0, 60])
-print(
-    ws[np.where(yield_strengths == 600)]
-    / (abs(rf2[np.where(yield_strengths == 600)]) / youngs_modulus) ** 0.5
-)
+plt.ylabel(r"$h_p/h_r$ [-]")
+# ax.set_yscale("log")
+ax.set_xscale("log")
+# plt.xlim([0, 0.01])
+# plt.ylim([0, 60])
+
 
 # %% Plotting sy vs w/(F_n/sy)^0.5
 plt.figure(2)
@@ -220,23 +293,228 @@ plt.xlabel(r"$w$ [mm]")
 plt.ylabel(r"$h_p$ [mm]")
 # plt.ylim([0, 1])
 
-# %% plotting sy/E vs H_s/sy
+# %% plotting sy/E vs H_s/sy and comparing to Bellemare.
+
+# Bellemare data
+SyEn05 = np.array(
+    [
+        0.00009127550492545203,
+        0.00018183662305265322,
+        0.0003657836973637655,
+        0.000910996230467547,
+        0.0013829268154842353,
+        0.001850441853902186,
+        0.002755029865482474,
+        0.0036507885630107538,
+        0.004564064807152558,
+    ]
+)
+SyEn035 = np.array(
+    [
+        0.00018361038117557183,
+        0.0003657836973637655,
+        0.0005552735201678112,
+        0.000910996230467547,
+        0.0013695671260338807,
+        0.001832565760794961,
+        0.002755029865482474,
+        0.003686400838249849,
+        0.004608585800169843,
+        0.005488496914453607,
+        0.00734394929059335,
+        0.009181101541270305,
+    ]
+)
+SyEn02 = np.array(
+    [
+        0.0003657836973637655,
+        0.0005499093304605992,
+        0.0009198827074412861,
+        0.0013829268154842353,
+        0.001832565760794961,
+        0.002755029865482474,
+        0.0036507885630107538,
+        0.004564064807152558,
+        0.005488496914453607,
+        0.00734394929059335,
+        0.009181101541270305,
+        0.01193227932178964,
+        0.014630419628596862,
+        0.018290345274250854,
+    ]
+)
+SyEn01 = np.array(
+    [
+        0.000910996230467547,
+        0.0013829268154842353,
+        0.001850441853902186,
+        0.002755029865482474,
+        0.0036507885630107538,
+        0.004564064807152558,
+        0.005488496914453607,
+        0.00734394929059335,
+        0.009181101541270305,
+        0.012048674891706431,
+        0.014773134694584501,
+        0.01846876174479757,
+        0.024003048313526922,
+        0.029430644365749936,
+    ]
+)
+SyEn002 = np.array(
+    [
+        0.004564064807152558,
+        0.005596096231070952,
+        0.007273003467023406,
+        0.009270660251516773,
+        0.011817008184959324,
+        0.014630419628596862,
+        0.01846876174479757,
+        0.024003048313526922,
+        0.029430644365749936,
+        0.03715187756641498,
+        0.0646079010962975,
+    ]
+)
+H_sEn05 = np.array(
+    [
+        127.24072146061593,
+        91.9490580850864,
+        64.36313475662794,
+        41.20971081286682,
+        32.14517167233989,
+        27.413182429943543,
+        22.50119858984532,
+        19.936406019748024,
+        17.55180701918815,
+    ]
+)
+H_sEn035 = np.array(
+    [
+        31.941072734389245,
+        25.55822488976337,
+        22.216372531184856,
+        19.188868179745473,
+        16.260234871130816,
+        14.873024394737772,
+        12.846224294454649,
+        11.527874003530679,
+        10.544395737996581,
+        9.956929482342783,
+        8.878363054142227,
+        8.43728824762442,
+    ]
+)
+H_sEn02 = np.array(
+    [
+        9.224236102937128,
+        8.7103206942872,
+        7.8164196103467924,
+        7.3809387278754945,
+        6.794387742987376,
+        6.498102619087817,
+        6.019931434271516,
+        5.8312315383745315,
+        5.684539377025377,
+        5.333751302423667,
+        5.367833218994537,
+        5.004610060594387,
+        4.941260397108687,
+        4.60690198195443,
+    ]
+)
+H_sEn01 = np.array(
+    [
+        4.213873053176194,
+        4.081785600829043,
+        3.8543746269920325,
+        3.903789819866838,
+        3.7335559600682307,
+        3.709850539733365,
+        3.593562103845928,
+        3.525546113450701,
+        3.593562103845928,
+        3.5031614074430344,
+        3.4588174738277044,
+        3.415034857325627,
+        3.525546113450701,
+        3.5031614074430344,
+    ]
+)
+H_sEn002 = np.array(
+    [
+        2.483605165552323,
+        2.4994750513508737,
+        2.467836042221924,
+        2.6638595513143373,
+        2.6638595513143373,
+        2.630139720177506,
+        2.6469459410585,
+        2.7676351255903446,
+        2.750062614373864,
+        2.80311772309926,
+        2.750062614373864,
+    ]
+)
+
+
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
-plt.plot(yield_strengths / youngs_modulus, H_s / yield_strengths.reshape(-1, 1), "o-")
-plt.legend(["n=0.1", "n=0.2", "n=0.3", "n=0.4", "n=0.5"])
+c = np.array(["k", "r", "g", "b", "m"])
+plt.plot(
+    yield_strengths / youngs_modulus,
+    H_s[:, 4] / yield_strengths,
+    "o",
+    c=c[0],
+    label="n=0.5",
+)
+plt.plot(
+    yield_strengths / youngs_modulus,
+    H_s[:, 3] / yield_strengths,
+    "o",
+    c=c[1],
+    label="n=0.4",
+)
+plt.plot(
+    yield_strengths / youngs_modulus,
+    H_s[:, 2] / yield_strengths,
+    "o",
+    c=c[2],
+    label="n=0.3",
+)
+plt.plot(
+    yield_strengths / youngs_modulus,
+    H_s[:, 1] / yield_strengths,
+    "o",
+    c=c[3],
+    label="n=0.2",
+)
+plt.plot(
+    yield_strengths / youngs_modulus,
+    H_s[:, 0] / yield_strengths,
+    "o",
+    c=c[4],
+    label="n=0.1",
+)
+plt.plot(SyEn05, H_sEn05, "x", c=c[0], label="Bellemare n=0.5")
+plt.plot(SyEn035, H_sEn035, "x", c=c[1], label="Bellemare n=0.35")
+plt.plot(SyEn02, H_sEn02, "x", c=c[2], label="Bellemare n=0.2")
+plt.plot(SyEn01, H_sEn01, "x", c=c[3], label="Bellemare n=0.1")
+plt.plot(SyEn002, H_sEn002, "x", c=c[4], label="Bellemare n=0.02")
+plt.legend()
 plt.xlabel(r"$\sigma_y/E$ [-]")
 ax.set_xscale("log")
 ax.set_yscale("log")
 plt.ylabel(r"$H_s/\sigma_y$ [-]")
 plt.ylim([2, 200])
-plt.xlim([0.0001, 0.1])
+plt.xlim([0.00005, 0.1])
+plt.grid()
 
 # %% plotting N, SY vs F_n/(Esy)^0.5h_r^2
 fnNorm = abs(rf2) / ((youngs_modulus * yield_strengths.reshape(-1, 1)) ** 0.5 * h_rs**2)
 SY, N = np.meshgrid(strain_hardening_indexs, yield_strengths)
 fig, ax = plt.subplots(subplot_kw={"projection": "3d"}, figsize=(10, 10))
-surf = ax.plot_surface(N, SY, fnNorm, cmap=cm.coolwarm)
+surf = ax.plot_surface(N, SY, fnNorm, cmap=cm.viridis, antialiased=True)
 ax.set_ylabel("n [-]")
 ax.set_xlabel(r"$\sigma_y [MPa]$")
 ax.set_zlabel(r"$F_n/((E\sigma_y)^{0.5}h_r^2) [-]$", rotation=90)
@@ -261,17 +539,25 @@ fig.colorbar(surf, shrink=0.5, aspect=5)
 
 # %% plotting SY, N vs F_n
 fig, ax = plt.subplots(1, 1, subplot_kw={"projection": "3d"}, figsize=(10, 10))
-SY, N = np.meshgrid(strain_hardening_indexs, yield_strengths / 1000)
+SY, N = np.meshgrid(strain_hardening_indexs, yield_strengths)
 plt.subplots_adjust(
     left=None, bottom=None, right=None, top=None, wspace=None, hspace=None
 )
-surf = ax.plot_surface(SY, N, abs(rf2), cmap=cm.coolwarm)
-ax.set_xlim([0.1, 0.5])
-ax.set_ylim([0, 2])
-ax.set_xlabel("n [-]")
-ax.set_ylabel(r"$\sigma_y [GPa]$")
-ax.set_zlabel(r"$F_n [N]$", rotation=90)
-fig.colorbar(surf, shrink=0.5, aspect=5, pad=0.1)
+surf = ax.plot_surface(N, SY, h_ps / h_rs, cmap=cm.viridis)
+ax.set_ylim([0.1, 0.5])
+# ax.set_xlim([0, 2000])
+ax.set_ylabel("n [-]")
+ax.set_xlabel(r"$\sigma_y [MPa]$")
+ax.zaxis.set_rotate_label(False)  # disable automatic rotation
+ax.set_zlabel(r"$w [mm]$", rotation=90)
+ax.view_init(azim=45, elev=30)
+# ax.xaxis._axinfo["label"]["space_factor"] = 5
+ax.set_box_aspect(None, zoom=0.90)
+
+
+fig.colorbar(surf, shrink=0.5, aspect=10, pad=0.01)
+
+
 # %% plotting SY, N vs  F_t
 fig, ax = plt.subplots(1, 1, subplot_kw={"projection": "3d"}, figsize=(10, 10))
 SY, N = np.meshgrid(strain_hardening_indexs, yield_strengths / 1000)
@@ -305,13 +591,13 @@ print(h_r, w, h_p)
 # plt.plot(z, y)
 # print(np.unique(coords[:, 0]))
 
-# %% Plotting scratch profile
+# %% Plotting scratch profile for one SY all n
 plt.figure()
 
 for i in [0.1, 0.2, 0.3, 0.4, 0.5]:
     fileNameID = (
         "SY"
-        + str(2000)
+        + str(100)
         + "_n0"
         + str(int(10 * i))
         + "_d0050_E200000_mu00_rho78_Poisson03"
@@ -323,11 +609,36 @@ for i in [0.1, 0.2, 0.3, 0.4, 0.5]:
     # print(h_r)
     plt.plot(x_plot / h_r, (y_plot) / h_r, "o-", label="n=" + str(i))
 
-plt.xlim([0, 6])
+plt.xlim([0, 7])
 plt.ylim([-1, 0.8])
 plt.xlabel(r"Distance to scratch center normalised by $h_r$")
 plt.ylabel(r"Surface height normalised by $h_r$")
 plt.legend()
+plt.grid()
+plt.show()
+# %% Plotting scratch profile for one n all SY
+plt.figure()
+ax = plt.subplot(111)
+
+for i in yield_strengths:
+    fileNameID = "SY" + str(i) + "_n01_d0050_E200000_mu00_rho78_Poisson03"
+    path = "ScratchData/MaterialSweep/"
+    rfs, coords = LoadScratchTestData(fileNameID=fileNameID, path=path, toLoad="both")
+    x_plot, y_plot = GetScratchProfile(coords=coords, lowerBound=2.00, upperBound=2.44)
+    h_r, w, h_p = GetTopographyData(coords, 2.0, 2.44)
+    # print(h_r)
+    ax.plot(x_plot / h_r, (y_plot) / h_r, "o-", label="sy=" + str(i))
+box = ax.get_position()
+ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+ax.legend(
+    loc="upper center", bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=5
+)
+plt.xlim([0, 7])
+plt.ylim([-1, 0.8])
+plt.xlabel(r"Distance to scratch center normalised by $h_r$")
+plt.ylabel(r"Surface height normalised by $h_r$")
+# plt.legend(lo)
+plt.grid()
 plt.show()
 
 # %% Plotting scratch profile and comparison for different meshes
@@ -456,8 +767,103 @@ print(maxRF3)
 # %% plot sns.pairplot
 sns.set_theme()
 # sns.pairplot(all_raw_data_pandas, hue="Strain Hardening")
-sns.pairplot(Fn_norm_data_pandas, hue="n")
+sns.pairplot(norm_data_pandas, hue="n")
 
+# %% material behavior plots
+
+yield_strength = [100]
+n = [0.1]
+plt.figure()
+for i in yield_strength:
+    for j in n:
+        total_strain_data = np.append(
+            np.arange(0.0001, 0.1, 0.01), np.linspace(0.1, 2, 20)
+        )
+        plastic_behaviour = []
+        yield_strain = i / youngs_modulus
+        K = youngs_modulus * yield_strain ** (1 - j)
+        plastic_behaviour.append([i, 0])
+        for total_strain in total_strain_data:
+            if total_strain > yield_strain:
+                yield_strength_ = round(K * total_strain**j, 5)
+                plastic_strain = round(
+                    total_strain - yield_strength_ / youngs_modulus, 5
+                )
+                plastic_behaviour.append([yield_strength_, plastic_strain])
+
+        plastic_behaviour = np.array(plastic_behaviour)
+
+        plt.plot(
+            plastic_behaviour[:, 1], plastic_behaviour[:, 0], label=f"sy:{i}, n:{j}"
+        )
+
+plt.xlim([0, 0.1])
+# plt.ylim([0,3000])
+plt.legend()
+plt.show()
 # %%
-sns.relplot(all_raw_data, x="sy", y="h_r", hue="n")
-# sns.scatterplot(all_norm_data, x="S_y/E", y="h_p/h_r", hue="n")
+fileNameID1 = "ExplicitRigidIndenterScratch_test1"
+fileNameID2 = "ExplicitRigidIndenterScratch_test2"
+fileNameID3 = "ExplicitRigidIndenterScratch_test3"
+path = "ScratchData/TestData/"
+rfs1, coords1 = LoadScratchTestData(fileNameID=fileNameID1, path=path, toLoad="both")
+h_r1, w1, h_p1 = GetTopographyData(coords1, 2.00, 2.44)
+rfs2, coords2 = LoadScratchTestData(fileNameID=fileNameID2, path=path, toLoad="both")
+h_r2, w2, h_p2 = GetTopographyData(coords2, 2.00, 2.44)
+rfs3, coords3 = LoadScratchTestData(fileNameID=fileNameID3, path=path, toLoad="both")
+h_r3, w3, h_p3 = GetTopographyData(coords3, 2.00, 2.44)
+
+print(h_r1, h_r2, h_r3)
+print(h_p1, h_p2, h_p3)
+
+# %% showcase raw coordinate and force data
+path = "ScratchData/MaterialSweep/"
+# path = "ScratchData/TestData/"
+fileNameID1 = "SY600_n02_d0050_E200000_mu00_rho78_Poisson03"
+# fileNameID1 = "ExplicitRigidIndenterScratch"
+
+rfs1, coords1 = LoadScratchTestData(fileNameID=fileNameID1, path=path, toLoad="both")
+# h_r1, w1, h_p1 = GetTopographyData(coords1, 2.00, 2.44)
+x, y, z = coords1[:, 3], coords1[:, 4], coords1[:, 5]
+
+h_r, w, h_p = GetTopographyData(coords1, 2.00, 2.44)
+print(h_r, w, h_p)
+# # Extend data to full domain
+z = np.append(z, z)
+y = np.append(y, y)
+x = np.append(x, -x)
+
+y = y - 0.64
+# Create a grid to interpolate onto
+xi = np.linspace(z.min(), z.max(), 1000)
+yi = np.linspace(x.min(), x.max(), 100)
+xi, yi = np.meshgrid(xi, yi)
+
+# Interpolate z values onto grid
+zi = griddata((z, x), y, (xi, yi), method="cubic")
+
+plt.figure(figsize=(8, 6))
+# plt.axis("equal")
+ax = plt.gca()
+ax.set_aspect("equal", adjustable="box")
+contour = plt.contourf(xi, yi, zi, levels=100, cmap="coolwarm")
+# contour = plt.contourf(xi[:,:-200], yi[:,:-200], zi[:,:-200], levels=100, cmap="coolwarm")
+plt.colorbar(
+    contour,
+    aspect=20,
+    location="top",
+    # ticks=[round(y.min(),3),0, round(y.max(),3)]
+)
+# plt.xlim([0, 2.88])
+# plt.ylim([-0.32, 0.32])
+# plt.xticks([0, 1.00, 2.00, 2.88])
+# plt.yticks([-0.32, 0, 0.32])
+plt.xlim([2.00, 2.44])
+plt.ylim([0, 0.32])
+plt.xticks([2.00, 2.11, 2.22, 2.33, 2.44])
+plt.yticks([0, 0.10, 0.21, 0.32])
+
+
+plt.xlabel("z-direction")
+plt.ylabel("x-direction")
+plt.show()
