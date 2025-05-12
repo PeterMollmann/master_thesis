@@ -7,7 +7,7 @@ import os
 import yaml
 
 
-def SRScratch(config_file_data, trainDataSet, testDataSet=None, seed=None):
+def SRScratch(config_file_data, trainDataSet, testDataSet, seed=None):
     """
     Args:
         yamlPath (str): Path to .yaml config file for the problem
@@ -22,8 +22,10 @@ def SRScratch(config_file_data, trainDataSet, testDataSet=None, seed=None):
     # config_file_data = loadYaml(path=yamlPath)
 
     # Initialise primitive set
-    pset = gp.PrimitiveSetTyped("Main", [float], float)
-    pset.renameArguments(ARG0="x")
+    pset = gp.PrimitiveSetTyped("Main", [float, float], float)
+    pset.renameArguments(ARG0="x1")
+    pset.renameArguments(ARG1="x2")
+
     pset.addTerminal(object, float, "a")
 
     batch_size = config_file_data["gp"]["batch_size"]
@@ -54,6 +56,9 @@ def SRScratch(config_file_data, trainDataSet, testDataSet=None, seed=None):
     best_ind = gpsr.best
     # print(best_ind)
     fit_score = gpsr.score(trainDataSet)
+    u_best = gpsr.predict(testDataSet)
+
     ray.shutdown()
     # print(fit_score)
-    return best_ind, fit_score
+
+    return best_ind, fit_score, u_best
