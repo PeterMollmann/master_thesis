@@ -8,6 +8,7 @@ src/GetDataFromScratch/ScratchData/MassScaleTestingData/
 src/GetDataFromScratch/ScratchData/VelocityTestingData/
 src/GetDataFromScratch/ScratchData/TestData/
 src/simpleRegression/saved_figs/
+src/SRScratch/Saved_results/
 
 # C extensions
 *.so
