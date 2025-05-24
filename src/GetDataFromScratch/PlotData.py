@@ -12,6 +12,17 @@ import pandas as pd
 import seaborn as sns
 from scipy.interpolate import griddata
 
+from matplotlib import rcParams
+
+rcParams.update(
+    {
+        "font.family": "serif",  # or "DejaVu Serif"
+        "mathtext.fontset": "cm",  # Use Computer Modern (LaTeX default)
+        "mathtext.rm": "serif",
+        "font.size": 12,
+    }
+)
+
 
 np.set_printoptions(legacy="1.25")
 # %%Extract basic features
@@ -207,11 +218,14 @@ plt.figure()
 # plt.plot(yield_strengths, abs(rf2), c="b")
 # plt.plot(yield_strengths, rf3, c="k")
 
-plt.plot(yield_strengths, rf3 / abs(rf2), c="r")
-# plt.legend(yield_strengths[1:-1:5])
-plt.xlabel(r"$\sigma_y$ [MPa]")
-# plt.ylabel(r"$F_t/F_n$ [-]")
+plt.plot(yield_strengths / youngs_modulus, rf3 / abs(rf2), "o", markersize=3)
+plt.plot(yield_strengths / youngs_modulus)
+plt.legend([r"$n=0.1$", r"$n=0.2$", r"$n=0.3$", r"$n=0.4$", r"$n=0.5$"])
+plt.xlabel(r"$\sigma_y/E$ [-]")
+plt.ylabel(r"$F_t/F_n$ [-]")
+plt.grid()
 plt.ylim([0, 0.4])
+# plt.xlim([0, 0.01])
 
 
 # %% Plotting H_s/E vs sy in log-log scale.
@@ -458,56 +472,70 @@ H_sEn002 = np.array(
 )
 
 
-fig = plt.figure()
+fig = plt.figure(figsize=(8, 6))
 ax = fig.add_subplot(1, 1, 1)
 c = np.array(["k", "r", "g", "b", "m"])
+c_bellemare = np.array(["k", "y", "b", "m", "c"])
 plt.plot(
     yield_strengths / youngs_modulus,
     H_s[:, 4] / yield_strengths,
     "o",
     c=c[0],
-    label="n=0.5",
+    label=r"FEM $n=0.5$",
 )
+plt.plot(SyEn05, H_sEn05, "x", c=c_bellemare[0], label="Bellemare $n=0.5$")
+
 plt.plot(
     yield_strengths / youngs_modulus,
     H_s[:, 3] / yield_strengths,
     "o",
     c=c[1],
-    label="n=0.4",
+    label=r"FEM $n=0.4$",
 )
+plt.plot(SyEn035, H_sEn035, "x", c=c_bellemare[1], label="Bellemare $n=0.35$")
+
 plt.plot(
     yield_strengths / youngs_modulus,
     H_s[:, 2] / yield_strengths,
     "o",
     c=c[2],
-    label="n=0.3",
+    label=r"FEM $n=0.3$",
 )
+plt.plot(SyEn02, H_sEn02, "x", c=c_bellemare[2], label="Bellemare $n=0.2$")
+
 plt.plot(
     yield_strengths / youngs_modulus,
     H_s[:, 1] / yield_strengths,
     "o",
     c=c[3],
-    label="n=0.2",
+    label=r"FEM $n=0.2$",
 )
+plt.plot(SyEn01, H_sEn01, "x", c=c_bellemare[3], label="Bellemare $n=0.1$")
+
 plt.plot(
     yield_strengths / youngs_modulus,
     H_s[:, 0] / yield_strengths,
     "o",
     c=c[4],
-    label="n=0.1",
+    label=r"FEM $n=0.1$",
 )
-plt.plot(SyEn05, H_sEn05, "x", c=c[0], label="Bellemare n=0.5")
-plt.plot(SyEn035, H_sEn035, "x", c=c[1], label="Bellemare n=0.35")
-plt.plot(SyEn02, H_sEn02, "x", c=c[2], label="Bellemare n=0.2")
-plt.plot(SyEn01, H_sEn01, "x", c=c[3], label="Bellemare n=0.1")
-plt.plot(SyEn002, H_sEn002, "x", c=c[4], label="Bellemare n=0.02")
-plt.legend()
+plt.plot(SyEn002, H_sEn002, "x", c=c_bellemare[4], label="Bellemare $n=0.02$")
+plt.legend(
+    # loc="upper center",
+    # bbox_to_anchor=(0.5, 1.15),
+    ncol=1,
+    fancybox=True,
+    shadow=True,
+    fontsize="small",
+)
 plt.xlabel(r"$\sigma_y/E$ [-]")
 ax.set_xscale("log")
 ax.set_yscale("log")
 plt.ylabel(r"$H_s/\sigma_y$ [-]")
 plt.ylim([2, 200])
 plt.xlim([0.00005, 0.1])
+for label in ax.get_xticklabels() + ax.get_yticklabels():
+    label.set_fontfamily("STIXGeneral")
 plt.grid()
 
 # %% plotting N, SY vs F_n/(Esy)^0.5h_r^2
@@ -521,6 +549,7 @@ ax.set_zlabel(r"$F_n/((E\sigma_y)^{0.5}h_r^2) [-]$", rotation=90)
 ax.set_xlim([2000, 0])
 ax.set_ylim([0.1, 0.5])
 ax.set_zlim([0, 12])
+
 
 fig.colorbar(surf, shrink=0.5, aspect=5, pad=0.1)
 plt.show()
@@ -575,13 +604,9 @@ fig.colorbar(surf, shrink=0.5, aspect=5, pad=0.1)
 
 # %% Plotting topography
 fileNameID = (
-    "SY"
-    + str(2000)
-    + "_n0"
-    + str(int(10 * 0.1))
-    + "_d0050_E200000_mu00_rho78_Poisson03"
+    "SY" + str(150) + "_n0" + str(int(10 * 0.1)) + "_d0050_E200000_mu00_rho78_Poisson03"
 )
-path = "ScratchData/Data1/"
+path = "ScratchData/MaterialSweep/"
 rfs, coords = LoadScratchTestData(fileNameID=fileNameID, path=path, toLoad="both")
 x, y, z = coords[:, 3], coords[:, 4], coords[:, 5]
 TopographyPlot(z, x, y, title="", modelSize="half")
@@ -777,7 +802,7 @@ plt.figure()
 for i in yield_strength:
     for j in n:
         total_strain_data = np.append(
-            np.arange(0.0001, 0.1, 0.01), np.linspace(0.1, 2, 20)
+            np.arange(0.0001, 0.1, 0.001), np.linspace(0.1, 7, 200)
         )
         plastic_behaviour = []
         yield_strain = i / youngs_modulus
@@ -797,7 +822,7 @@ for i in yield_strength:
             plastic_behaviour[:, 1], plastic_behaviour[:, 0], label=f"sy:{i}, n:{j}"
         )
 
-plt.xlim([0, 0.1])
+# plt.xlim([0, 0.1])
 # plt.ylim([0,3000])
 plt.legend()
 plt.show()
@@ -817,6 +842,8 @@ print(h_r1, h_r2, h_r3)
 print(h_p1, h_p2, h_p3)
 
 # %% showcase raw coordinate and force data
+
+
 path = "ScratchData/MaterialSweep/"
 # path = "ScratchData/TestData/"
 fileNameID1 = "SY600_n02_d0050_E200000_mu00_rho78_Poisson03"
@@ -848,12 +875,15 @@ ax = plt.gca()
 ax.set_aspect("equal", adjustable="box")
 contour = plt.contourf(xi, yi, zi, levels=100, cmap="coolwarm")
 # contour = plt.contourf(xi[:,:-200], yi[:,:-200], zi[:,:-200], levels=100, cmap="coolwarm")
-plt.colorbar(
+cbar = plt.colorbar(
     contour,
     aspect=20,
     location="top",
+    label="y-direction [mm]",
     # ticks=[round(y.min(),3),0, round(y.max(),3)]
 )
+
+
 # plt.xlim([0, 2.88])
 # plt.ylim([-0.32, 0.32])
 # plt.xticks([0, 1.00, 2.00, 2.88])
@@ -862,8 +892,113 @@ plt.xlim([2.00, 2.44])
 plt.ylim([0, 0.32])
 plt.xticks([2.00, 2.11, 2.22, 2.33, 2.44])
 plt.yticks([0, 0.10, 0.21, 0.32])
+for label in ax.get_xticklabels() + ax.get_yticklabels() + cbar.ax.get_xticklabels():
+    label.set_fontfamily("STIXGeneral")
 
-
-plt.xlabel("z-direction")
-plt.ylabel("x-direction")
+plt.xlabel("z-direction [mm]")
+plt.ylabel("x-direction [mm]")
 plt.show()
+
+# %%
+yield_strengths_test = np.arange(100, 2050, 100)
+strain_hardening_indexs_test = np.arange(0.1, 0.6, 0.2)
+youngs_modulus = 200000
+
+h_rs = np.zeros((len(yield_strengths_test), len(strain_hardening_indexs_test)))
+ws = np.zeros((len(yield_strengths_test), len(strain_hardening_indexs_test)))
+h_ps = np.zeros((len(yield_strengths_test), len(strain_hardening_indexs_test)))
+rf2 = np.zeros((len(yield_strengths_test), len(strain_hardening_indexs_test)))
+rf3 = np.zeros((len(yield_strengths_test), len(strain_hardening_indexs_test)))
+rf2_test = np.zeros((len(yield_strengths_test), len(strain_hardening_indexs_test)))
+rf3_test = np.zeros((len(yield_strengths_test), len(strain_hardening_indexs_test)))
+sy_s = np.zeros((len(yield_strengths_test), len(strain_hardening_indexs_test)))
+ns = np.zeros((len(yield_strengths_test), len(strain_hardening_indexs_test)))
+
+
+scratch_depth = 50e-3
+indenter_angle = 120
+indenter_radius_at_scratch_depth = scratch_depth / np.tan(
+    (90 - indenter_angle / 2) * np.pi / 180
+)
+
+for i, sy in enumerate(yield_strengths_test):
+    count = 0
+    for j, n in enumerate(strain_hardening_indexs_test):
+        # print(yield_strengths)
+        fileNameID = (
+            "SY"
+            + str(sy)
+            + "_n0"
+            + str(int(10 * n))
+            + "_d0050_E200000_mu00_rho78_Poisson03"
+        )
+        path = "ScratchData/TestData/"
+        rfs, coords = LoadScratchTestData(
+            fileNameID=fileNameID, path=path, toLoad="both"
+        )
+        # x, y, z = coords[:, 0], coords[:, 1], coords[:, 2]
+        h_r, w, h_p = GetTopographyData(coords, 2.00, 2.44)
+        h_rs[i, j] = h_r
+        ws[i, j] = w
+        h_ps[i, j] = h_p
+        rf2_test[i, j] = np.mean(rfs[-4 - 20 : -4, 2])
+        rf3_test[i, j] = np.mean(rfs[-4 - 20 : -4, 3])
+        rf2[i, j] = abs(rfs[-4, 2])
+        rf3[i, j] = rfs[-4, 3]
+        sy_s[i, j] = sy
+        ns[i, j] = round(n, 1)
+
+H_s = abs(rf2) / (1 / 4 * (ws) ** 2)
+
+# %%
+rfs, coords = LoadScratchTestData(fileNameID=fileNameID, path=path, toLoad="both")
+plt.figure()
+plt.plot(abs(rfs[:, 3]))
+
+# %% plot F_t/F_n vs sy
+plt.figure()
+
+# plt.plot(yield_strengths, abs(rf2), c="b")
+# plt.plot(yield_strengths, rf3, c="k")
+color = ["b", "r", "k"]
+for i in range(3):
+    plt.plot(
+        yield_strengths_test / youngs_modulus,
+        abs(rf3_test[:, i]) / abs(rf2_test[:, i]),
+        "o-",
+        color=color[i],
+        markersize=5,
+        label=f"Averge measure, n={ns[1,i]}",
+    )
+    plt.plot(
+        yield_strengths_test / youngs_modulus,
+        rf3[:, i] / abs(rf2[:, i]),
+        "x-",
+        color=color[i],
+        markersize=5,
+        label="last point measure",
+    )
+plt.legend()
+plt.xlabel(r"$\sigma_y/E$ [-]")
+plt.ylabel(r"$F_t/F_n$ [-]")
+plt.grid()
+plt.ylim([0, 0.4])
+# plt.xlim([0, 0.01])
+
+# %% Plotting forces over simulation time
+path = "ScratchData/"
+fileNameID1 = "ExplicitRigidIndenterScratch"
+rfs, coords = LoadScratchTestData(fileNameID=fileNameID1, path=path, toLoad="both")
+idx = np.where(rfs[:, 0] == 0)[0]
+time = rfs[:, 0]
+time[idx[1] :] = rfs[idx[1] :, 0] + rfs[idx[1] - 1, 0]
+time[idx[2] :] = rfs[idx[2] :, 0] + rfs[idx[2] - 1, 0]
+z = np.linspace(0, 2, len(time[idx[1] : idx[2]]))
+N = 5
+rf2_movingMean = np.convolve(abs(rfs[idx[1] : idx[2], 2]), np.ones(N) / N, mode="valid")
+z_movingMean = np.linspace(0, 2, len(rf2_movingMean))
+plt.plot(z, abs(rfs[idx[1] : idx[2], 2]))
+plt.plot(z_movingMean, rf2_movingMean)
+plt.vlines([2.00 - 0.44, 2.00], 0, 100, "k", "--", label="Zone of data extraction")
+plt.ylim([40, 100])
+plt.grid()
