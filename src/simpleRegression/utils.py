@@ -47,8 +47,8 @@ def plot_data(
     target_all,
     features_test,
     target_test,
-    method_name: str,
     best_params,
+    degrees: list = [2, 2],
     include_interactions: bool = True,
     xlabel: str = "Feature 1",
     ylabel: str = "Feature 2",
@@ -73,28 +73,19 @@ def plot_data(
         save_fig (bool): Whether to save the figure as a PNG file.
 
     """
-    if len(features_all) == 2:
-        x1, x2 = features_all
-        y = target_all
-        x1_test, x2_test = features_test
-        y_test = target_test
 
-    elif len(features_all) == 3:
-        x1, x2, x3 = features_all
-        y = target_all
-        x1_test, x2_test, x3_test = features_test
-        y_test = target_test
-
-    if method_name == "linear":
-        degree = 1
-    elif method_name == "secondOrder":
-        degree = 2
+    x1 = features_all[0, :]
+    x2 = features_all[1, :]
+    y = target_all
+    x1_test = features_test[0, :]
+    x2_test = features_test[1, :]
+    y_test = target_test
 
     # Calculate the fitted values based on the regression method
     y_pred = fittingFunction(
         features_all,
         *best_params,
-        degree=degree,
+        degrees=degrees,
         include_interactions=include_interactions,
     )
     y_pred_grid = y_pred.reshape(len(np.unique(x1)), len(np.unique(x2)))
@@ -183,7 +174,7 @@ def plot_data(
             + "_nFeatures"
             + str(len(features_all))
             + "_degree"
-            + str(degree)
+            + str(degrees)
             + "_interactions"
             + str(include_interactions)
             + ".png"
