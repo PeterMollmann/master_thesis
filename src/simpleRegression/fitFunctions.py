@@ -4,41 +4,48 @@ from sklearn.metrics import r2_score, mean_squared_error
 from scipy.optimize import curve_fit
 
 
-def fittingFunction(X, *coefficients, degree=2, include_interactions=True):
+def fittingFunction(X, *coefficients, degrees=[2, 2], include_interactions=True):
     """A fitting function for 3D data with the form z = a + b*x1 + c*x2 + d*x1^2 + e*x2^2 + f*x1*x2.
     Takes the feature data in an array X, and the parameters a, b, c, d, e, f.
+    Currently only works with two features.
     Args:
-        X (array-like): A tuple containing the feature data, ex. x1 and x2.
+        X (array-like): An array containing the feature data, ex. x1 and x2. Has structure [n_feature, n_samples]
         coefficients (tuple): A tuple containing the coefficients ex. a, b, c, d, e, f.
-        degree (int): The degree of the polynomial fit.
+        degrees (list): The degree of fit for each feature of the polynomial fit. First entry for the first feature and so on
         include_interactions (bool): Whether to include interaction terms, e.g. x1*x2.
     Returns:
         array-like: The fitted values.
     """
+    assert len(degrees) == X.shape[0]
     n_features = X.shape[0]
 
-    y = coefficients[0]
+    coefficient_number = 0
+    y = coefficients[coefficient_number]
+    coefficient_number += 1
 
-    if degree >= 1:
-        y += np.dot(coefficients[1 : n_features + 1], X)
+    if degrees[0] >= 1:
+        y += np.dot(coefficients[coefficient_number], X[0, :])
+        coefficient_number += 1
 
-    if degree >= 2:
-        y += np.dot(coefficients[n_features + 1 : 2 * n_features + 1], X**2)
+    if degrees[1] >= 1:
+        y += np.dot(coefficients[coefficient_number], X[1, :])
+        coefficient_number += 1
 
-    if degree >= 2 and include_interactions:
-        n_interactions = int(n_features * (n_features - 1) / 2)
-        interaction_coefficients = coefficients[
-            2 * n_features + 1 : 2 * n_features + 1 + n_interactions
-        ]
-        for dk, (i, j) in zip(
-            interaction_coefficients, combinations(range(n_features), 2)
-        ):
-            y += dk * X[i] * X[j]
+    if degrees[0] >= 2:
+        y += np.dot(coefficients[coefficient_number], X[0, :] ** 2)
+        coefficient_number += 1
+
+    if degrees[1] >= 2:
+        y += np.dot(coefficients[coefficient_number], X[1, :] ** 2)
+        coefficient_number += 1
+
+    if include_interactions:
+        y += np.dot(coefficients[coefficient_number], X[0, :] * X[1, :])
 
     return y.flatten()
 
 
-def SimpleRegression(features, target, degree=1, use_interactions: bool = True):
+def SimpleRegression(features, target, degrees=[2, 2], use_interactions: bool = True):
     """
     Perform polynomial regression on the provided data using the specified regression degree.
 
@@ -54,22 +61,28 @@ def SimpleRegression(features, target, degree=1, use_interactions: bool = True):
     y = target
 
     n_features = features.shape[0]
-    n_interactions = int(n_features * (n_features - 1) / 2) if use_interactions else 0
+    n_interactions = int(n_features * (n_features - 1) / 2)
 
-    n_params = 0
+    n_params = 1
 
-    if degree >= 1:
-        n_params = 1 + n_features
-    if degree >= 2:
-        n_params += n_features
-    if degree >= 2 and use_interactions:
-        n_params += n_interactions
+    if degrees[0] >= 1:
+        n_params += 1
+    if degrees[1] >= 1:
+        n_params += 1
+    if degrees[0] >= 2:
+        n_params += 1
+    if degrees[1] >= 2:
+        n_params += 1
+    # if degrees[0] >= 2 and degrees[1] >= 2 and use_interactions:
+    #     n_params += n_interactions
+    if use_interactions:
+        n_params += 1
 
     p0 = (1,) * n_params
 
     def model(x, *coefficients):
         return fittingFunction(
-            x, *coefficients, degree=degree, include_interactions=use_interactions
+            x, *coefficients, degrees=degrees, include_interactions=use_interactions
         )
 
     popt, _ = curve_fit(model, x, y, p0=p0)
