@@ -1,6 +1,6 @@
 gp:
-  NINDIVIDUALS: 200
-  NGEN: 25
+  NINDIVIDUALS: 10
+  NGEN: 10
   multi_island:
     num_islands: 1
     migration: { "freq": 10, "frac": 0.05 }

@@ -11,8 +11,13 @@ def test_linear_regression():
     popt, _, _ = SimpleRegression(
         features=np.array([x, y]),
         target=z,
-        degree=1,
+        degrees=[1, 1],
+        use_interactions=False,
     )
     assert np.allclose(
         popt, [2, 3, 4], atol=0.1
     ), f"Expected parameters close to [2, 3, 4], got {popt}"
+
+
+if __name__ == "__main__":
+    test_linear_regression()
