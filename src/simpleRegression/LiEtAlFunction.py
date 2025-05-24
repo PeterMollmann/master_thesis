@@ -1,5 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
+
+from matplotlib import rcParams
 
 
 def LiEtAlFunction(
@@ -59,35 +62,89 @@ def LiEtAlFunction(
     return abs(Fn), Ft
 
 
-def LiEtAlPlot(RawData, Fn, Ft):
-    plt.subplot(1, 2, 1)
-    plt.scatter(RawData["Yield Strength"], RawData["Normal Force"], label="Fn Data")
-    plt.scatter(
-        RawData["Yield Strength"],
-        Fn,
-        label="Fn LiEtAl",
-        marker="x",
-        color="red",
-        s=100,
+def LiEtAlToNonDimGroups(Fn, Ft, w, E):
+    """
+    Convert the forces to non-dimensional groups.
+    params:
+        Fn: Normal force
+        Ft: Tangential force
+        w: Width
+        E: Young's modulus
+    returns:
+        H_sE: Scratch hardness non-dimensional group
+        FtFn: Friction non-dimensional group
+    """
+
+    Fn = Fn.reshape(40, 5)
+    Ft = Ft.reshape(40, 5)
+    w = w.reshape(40, 5)
+
+    H_s = Fn / (1 / 4 * w**2)
+    H_sE = H_s / E
+    FtFn = Ft / Fn
+
+    return H_sE, FtFn
+
+
+def LiEtAlPlot(Sy, n, LiEtAlForce, TargetForce, ylabel=""):
+
+    rcParams.update(
+        {
+            "font.family": "serif",  # or "DejaVu Serif"
+            "mathtext.fontset": "cm",  # Use Computer Modern (LaTeX default)
+            "mathtext.rm": "serif",
+            "font.size": 12,
+        }
     )
-    plt.xlabel("Yield Strength")
-    plt.ylabel("Force")
-    plt.title("LiEtAl Function")
-    plt.legend()
-    plt.grid()
-    plt.subplot(1, 2, 2)
-    plt.scatter(RawData["Yield Strength"], RawData["Tangential Force"], label="Ft Data")
-    plt.scatter(
-        RawData["Yield Strength"],
-        Ft,
-        label="Ft LiEtAl",
-        marker="x",
-        color="green",
-        s=100,
+
+    Sy = Sy.reshape(40, 5)
+    n = n.reshape(40, 5)
+    LiEtAlForce = LiEtAlForce.reshape(40, 5)
+    TargetForce = TargetForce.reshape(40, 5)
+
+    colors = ["m", "r", "g", "b", "k"]
+    shapes = ["*", "o", "x", "^", "+"]
+
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(111)
+
+    for i in range(len(n[1, :])):
+        plt.scatter(
+            Sy[:, i],
+            TargetForce[:, i],
+            color=colors[i],
+            marker=shapes[i],
+            label=rf"$n={n[1,i]}$",
+        )
+        plt.plot(
+            Sy.reshape(40, 5)[:, i],
+            LiEtAlForce.reshape(40, 5)[:, i],
+            color=colors[i],
+            linestyle="--",
+            label="Li et al.",
+        )
+
+    if ylabel == "Fn":
+        plt.ylim([0, 300])
+        plt.ylabel(r"$F_n$ [N]")
+    elif ylabel == "Ft":
+        plt.ylim([0, 70])
+        plt.ylabel(r"$F_t$ [N]")
+    plt.xlim([0, 2000])
+
+    plt.xlabel(r"$\sigma_y [MPa]$")
+
+    plt.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, 1.15),
+        ncol=5,
+        fancybox=True,
+        shadow=True,
+        fontsize="small",
     )
-    plt.xlabel("Yield Strength")
-    plt.ylabel("Force")
-    plt.title("LiEtAl Function")
-    plt.legend()
+    for label in ax.get_xticklabels() + ax.get_yticklabels():
+        label.set_fontfamily("STIXGeneral")
+    ax.set_axisbelow(True)
+
     plt.grid()
     plt.show()
