@@ -13,6 +13,7 @@ def SRScratch(config_file_data, trainDataSet, testDataSet, seed=None):
         yamlPath (str): Path to .yaml config file for the problem
         features (array-like): Array with features data. Different features as columns.
         target (array-like): Array with target data.
+        seed (str): Seed for the initial population.
 
     Returns:
 
@@ -27,6 +28,14 @@ def SRScratch(config_file_data, trainDataSet, testDataSet, seed=None):
     pset.renameArguments(ARG1="x2")
 
     pset.addTerminal(object, float, "a")
+
+    # def protectedDiv(left, right):
+    #     try:
+    #         return left / right
+    #     except ZeroDivisionError:
+    #         return np.nan
+
+    # pset.addPrimitive(protectedDiv, [float, float], float)
 
     batch_size = config_file_data["gp"]["batch_size"]
     callback_func = assign_attributes
@@ -56,9 +65,10 @@ def SRScratch(config_file_data, trainDataSet, testDataSet, seed=None):
     best_ind = gpsr.best
     # print(best_ind)
     fit_score = gpsr.score(trainDataSet)
-    u_best = gpsr.predict(testDataSet)
+    train_pred = gpsr.predict(trainDataSet)
+    test_pred = gpsr.predict(testDataSet)
 
     ray.shutdown()
     # print(fit_score)
 
-    return best_ind, fit_score, u_best
+    return best_ind, fit_score, train_pred, test_pred
