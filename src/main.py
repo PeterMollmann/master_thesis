@@ -1,5 +1,6 @@
 def main():
-    print("Hello from MasterThesis!")
+
+    print("hello world")
 
 
 if __name__ == "__main__":
