@@ -37,7 +37,7 @@ def test_sr_on_scratch():
     train_data.X = [train_data.X[:, i] for i in range(X_train.shape[1])]
     test_data.X = [test_data.X[:, i] for i in range(X_train.shape[1])]
 
-    best_ind, fit_score, u_best = SRScratch(
+    best_ind, fit_score, train_pred, test_pred = SRScratch(
         config_file_data=config_file_data,
         trainDataSet=train_data,
         testDataSet=test_data,
@@ -45,14 +45,14 @@ def test_sr_on_scratch():
 
     sC = sympyConversion(tree=best_ind, best_ind_consts=best_ind.consts)
     simple_str = sC.simplify_expr()
-    # print("Simplified is:")
-    # print(f"{simple_str}")
+    print("Simplified is:")
+    print(f"{simple_str}")
 
-    MSE_test = mean_squared_error(y_test, u_best)
-    r2_test = r2_score(y_test, u_best)
+    MSE_test = mean_squared_error(y_test, test_pred)
+    r2_test = r2_score(y_test, test_pred)
 
-    # print("MSE on the test set = ", MSE_test)
-    # print("R^2 on the test set = ", r2_test)
+    print("MSE on the test set = ", MSE_test)
+    print("R^2 on the test set = ", r2_test)
 
 
 if __name__ == "__main__":
